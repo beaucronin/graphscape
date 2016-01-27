@@ -1,0 +1,26 @@
+{
+  "name": "a-frame-test",
+  "version": "0.0.1",
+  "description": "A first A-frame VR project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "budo --live --verbose --port 3000 --open",
+    "deploy": "ghpages",
+    "ghpages": "ghpages"
+  },
+  "devDependencies": {
+    "budo": "^7.0.0",
+    "ghpages": "0.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beaucronin/a-frame-test.git"
+  },
+  "author": "Beau Cronin <beau.cronin@gmail.com> (https://github.com/beaucronin)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/beaucronin/a-frame-test/issues"
+  },
+  "homepage": "https://github.com/beaucronin/a-frame-test#readme"
+}
