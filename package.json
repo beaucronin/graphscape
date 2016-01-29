@@ -9,6 +9,14 @@
     "deploy": "ghpages",
     "ghpages": "ghpages"
   },
+  "dependencies": {
+    "tivo": "~0.0.4",
+    "aframe": "~0.1.1",
+    "ws": "~0.4.32",
+    "express": "~4.8.8",
+    "http-server": "~0.6.1",
+"polymerize": "~1.0.0"
+  },
   "devDependencies": {
     "budo": "^7.0.0",
     "ghpages": "0.0.3"
