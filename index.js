@@ -1,13 +1,21 @@
 var nodes = {};
-var SPEED = 3600;
+var SPEED = 5;
 var graph = new Graph(),
-	layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .5, repulsion: 0.01, width: 1000, height: 1000 });
+	// layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .5, repulsion: 0.01, width: 1000, height: 1000 });
+	layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .05, repulsion: 0.001, width: 1000, height: 1000 });
 
 var spriteMaterial = new THREE.SpriteMaterial( 
 { 
 	map: (new THREE.TextureLoader()).load('glow.png'),
 	color: 0x00ff0f, transparent: false, blending: THREE.AdditiveBlending
 });
+
+var container, stats;
+var camera, scene, renderer, particles, geometry, material, i, h, color, sprite, size;
+var mouseX = 0, mouseY = 0;
+
+var windowHalfX = window.innerWidth / 2;
+var windowHalfY = window.innerHeight / 2;
 
 function initLayout() {
 	layout.init();
@@ -17,9 +25,8 @@ function createNode(name) {
 	var geo = new THREE.SphereGeometry(.15, 32,32),
 		mat = new THREE.MeshPhongMaterial({ color: "#2233dd"}),
 		mesh = new THREE.Mesh(geo, mat);
-	// mesh.position.set(x, y, -1);
 	mesh.position.set(Math.random() - .5, Math.random() - .5, Math.random() - 1.5);
-	AFRAME.aframeCore.AScene.scene.add(mesh);
+	scene.add(mesh);
 	nodes[name] = mesh;
 	var node = new Node(mesh.id);
 	node.position = mesh.position;
@@ -39,18 +46,17 @@ function processEvent(e) {
 		if (! (e.tgt in nodes))
 			createNode(e.tgt);
 
-		var camera = AFRAME.aframeCore.AScene.scene.el.cameraEl.components.camera.camera;
 		var sprite = new THREE.Sprite( spriteMaterial.clone() );
 		sprite.scale.set(0.25, 0.25, 0.25);
 
 		var p1 = nodes[e.src].position,
 			p2 = nodes[e.tgt].position,
 			geo = new THREE.SphereGeometry(.001, 4, 4),
-			mat = new THREE.MeshPhongMaterial({ color: 0x2222aa }),
+			mat = new THREE.MeshLambertMaterial({ color: 0x2222ff }),
 			mesh = new THREE.Mesh(geo, mat);
 
 		mesh.add(sprite);
-		AFRAME.aframeCore.AScene.scene.add(mesh);
+		scene.add(mesh);
 		if (graph.addEdge(graph.getNode(nodes[e.src].id), graph.getNode(nodes[e.tgt].id)))
 			initLayout();
 
@@ -65,7 +71,7 @@ function processEvent(e) {
 				mesh.position.z = this.z;
 			})
 			.onComplete(function() {
-				AFRAME.aframeCore.AScene.scene.remove(mesh);
+				scene.remove(mesh);
 			})
 			.easing(TWEEN.Easing.Quadratic.InOut)
 			.start();
@@ -82,10 +88,10 @@ window.onload = function() {
 	socket.onopen = function() {
 		socket.send(JSON.stringify({
 			command: "play",
-			// start: "2016-01-01T00:00:00.000Z",
-			// end: "2016-01-01T00:00:30.000Z",
-			start: "2001-03-01T12:00:00.000Z",
-			end: "2001-03-02T00:00:00.000Z",
+			start: "2016-01-01T00:00:00.000Z",
+			end: "2016-01-01T00:00:30.000Z",
+			// start: "2001-03-01T12:00:00.000Z",
+			// end: "2001-03-02T00:00:00.000Z",
 			loop: true,
 			speed: SPEED
 		}));
@@ -94,14 +100,54 @@ window.onload = function() {
 	var gui = new DAT.GUI({
     	height : 5 * 32 - 1
 	});
-	gui.add(layout, 'attraction_multiplier').min(0.0).max(1.0).step(.025).name('attraction');
-	gui.add(layout, 'repulsion_multiplier').min(.0001).max(.005).step(.0001).name('repulsion');
+	// gui.add(layout, 'attraction_multiplier').min(0.0).max(1.0).step(.025).name('attraction');
+	// gui.add(layout, 'repulsion_multiplier').min(.0001).max(.005).step(.0001).name('repulsion');
 }
 
-requestAnimationFrame(animate);
+init();
+animate();
+
+function init() {
+
+	container = document.createElement( 'div' );
+	document.body.appendChild( container );
+
+	camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 2, 2000 );
+	camera.position.z = 5;
+	camera.lookAt(0, 0, 0);
+
+	scene = new THREE.Scene();
+	// scene.fog = new THREE.FogExp2( 0x000000, 0.001 );
+
+	var light = new THREE.AmbientLight( 0x404040 );
+	scene.add(light);
+
+	renderer = new THREE.WebGLRenderer();
+	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	container.appendChild( renderer.domElement );
+	window.addEventListener( 'resize', onWindowResize, false );
+
+	var controls = new THREE.OrbitControls(camera, renderer.domElement);
+}
+
+function onWindowResize() {
+
+	windowHalfX = window.innerWidth / 2;
+	windowHalfY = window.innerHeight / 2;
+
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+
+	renderer.setSize( window.innerWidth, window.innerHeight );
+
+}
 
 function animate(time) {
-    requestAnimationFrame(animate);
-    TWEEN.update(time);
-    layout.generate();
+	requestAnimationFrame( animate );
+	renderer.render( scene, camera );
+	layout.generate();
+	TWEEN.update(time);
+
 }
+

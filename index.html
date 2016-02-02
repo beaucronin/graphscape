@@ -2,20 +2,42 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Hello, World! • A-Frame</title>
-    <meta name="description" content="Hello, World! • A-Frame">
-    <script src="https://aframe.io/releases/latest/aframe.min.js"></script>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Graph Dynamics Demo</title>
+    <style>
+      body {
+        background-color: #000000;
+        margin: 0px;
+        overflow: hidden;
+        font-family:Monospace;
+        font-size:13px;
+        text-align:center;
+        font-weight: bold;
+        text-align:center;
+      }
+
+      a {
+        color:#0078ff;
+      }
+
+      #info {
+        color:#fff;
+        position: absolute;
+        top: 0px; width: 100%;
+        padding: 5px;
+        z-index:100;
+      }
+
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.js"></script>
     <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5.1/dat.gui.min.js"></script>
     <script src="GraphLayout.js"></script>
+    <script src="OrbitControls.js"></script>
     <script src="Tween.js"></script>
-    <script src="index.js"></script>
   </head>
   <body>
-    <a-scene id="thescene">
-      <a-camera position="0 1.8 4"></a-camera>
-      <!-- <a-plane rotation="-90 0 0" width="10" height="12" color="#223333"></a-plane> -->
-      <a-sky color="#040808"></a-sky>
-    </a-scene>
+    <script src="index.js"></script>
   </body>
 </html>
