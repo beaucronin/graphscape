@@ -10,7 +10,7 @@
     "ghpages": "ghpages"
   },
   "dependencies": {
-    "tivo": "~0.0.4",
+    "tivo": "~0.0.12",
     "aframe": "~0.1.1",
     "ws": "~0.4.32",
     "express": "~4.8.8",

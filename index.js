@@ -1,7 +1,7 @@
 var nodes = {};
-var SPEED = 2;
+var SPEED = 3600;
 var graph = new Graph(),
-	layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .5, repulsion: 0.001, width: 1000, height: 1000 });
+	layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .5, repulsion: 0.01, width: 1000, height: 1000 });
 
 var spriteMaterial = new THREE.SpriteMaterial( 
 { 
@@ -13,12 +13,32 @@ function initLayout() {
 	layout.init();
 }
 
+function createNode(name) {
+	var geo = new THREE.SphereGeometry(.15, 32,32),
+		mat = new THREE.MeshPhongMaterial({ color: "#2233dd"}),
+		mesh = new THREE.Mesh(geo, mat);
+	// mesh.position.set(x, y, -1);
+	mesh.position.set(Math.random() - .5, Math.random() - .5, Math.random() - 1.5);
+	AFRAME.aframeCore.AScene.scene.add(mesh);
+	nodes[name] = mesh;
+	var node = new Node(mesh.id);
+	node.position = mesh.position;
+	node.data = mesh;
+	console.log('created node '+name);
+	if (graph.addNode(node))
+		initLayout();	
+}
+
 function processEvent(e) {
-	var srcEl, tgtEl;
 	if ('type' in e) {
 		// informational message
 		// console.log(e);
 	} else {
+		if (! (e.src in nodes))
+			createNode(e.src);
+		if (! (e.tgt in nodes))
+			createNode(e.tgt);
+
 		var camera = AFRAME.aframeCore.AScene.scene.el.cameraEl.components.camera.camera;
 		var sprite = new THREE.Sprite( spriteMaterial.clone() );
 		sprite.scale.set(0.25, 0.25, 0.25);
@@ -31,8 +51,8 @@ function processEvent(e) {
 
 		mesh.add(sprite);
 		AFRAME.aframeCore.AScene.scene.add(mesh);
-		graph.addEdge(graph.getNode(nodes[e.src].id), graph.getNode(nodes[e.tgt].id));
-		initLayout();
+		if (graph.addEdge(graph.getNode(nodes[e.src].id), graph.getNode(nodes[e.tgt].id)))
+			initLayout();
 
 		var tween = new TWEEN.Tween({ x: p1.x, y: p1.y, z: p1.z })
 			.to({ x: p2.x, y: p2.y, z: p2.z }, 1000)
@@ -53,51 +73,29 @@ function processEvent(e) {
 }
 
 window.onload = function() {
-	$.ajax({
-		url: "testNodes.json",
-		dataType: "json",
-		success: function(response) {
-			$.each(response, function(i, item) {
-				var x = Math.cos(i * (Math.PI / 3));
-				var y = Math.sin(i * (Math.PI / 3)) + 2;
-				var geo = new THREE.SphereGeometry(.15, 32,32),
-					mat = new THREE.MeshPhongMaterial({ color: "#2233dd"}),
-					mesh = new THREE.Mesh(geo, mat);
-				mesh.position.set(x, y, -1);
-				AFRAME.aframeCore.AScene.scene.add(mesh);
-				nodes[item.name] = mesh;
-				var node = new Node(mesh.id);
-				node.position = mesh.position;
-				node.data = mesh;
-				graph.addNode(node);
-			});
-			initLayout();
-			// setTimeout(function() { initLayout(); }, 5000);
-			// $.each(response, function(i, item) {
-			// 	var x = Math.cos(i * (Math.PI / 3));
-			// 	var y = Math.sin(i * (Math.PI / 3)) + 2;
-			// 	var newEl = $("<a-sphere id='node-"+item.name+"'>")
-			// 		.attr("position", x+" "+y+" -1")
-			// 		.attr("radius", ".15")
-			// 		.attr("color", "#2233dd");
-			// 	$('#thescene').append(newEl);
-			// });
+	var socket = new WebSocket('ws://127.0.0.1:8080/');
+	socket.onmessage = function(event) {
+		processEvent(JSON.parse(event.data));
+		var data = JSON.parse(event.data);
+		console.log(data);
+	}
+	socket.onopen = function() {
+		socket.send(JSON.stringify({
+			command: "play",
+			// start: "2016-01-01T00:00:00.000Z",
+			// end: "2016-01-01T00:00:30.000Z",
+			start: "2001-03-01T12:00:00.000Z",
+			end: "2001-03-02T00:00:00.000Z",
+			loop: true,
+			speed: SPEED
+		}));
+	}
 
-			var socket = new WebSocket('ws://127.0.0.1:8080/');
-			socket.onmessage = function(event) {
-				processEvent(JSON.parse(event.data));
-			}
-			socket.onopen = function() {
-				socket.send(JSON.stringify({
-					command: "play",
-					start: "2016-01-01T00:00:00.000Z",
-					end: "2016-01-01T00:00:30.000Z",
-					loop: true,
-					speed: SPEED
-				}));
-			}
-
-		}});
+	var gui = new DAT.GUI({
+    	height : 5 * 32 - 1
+	});
+	gui.add(layout, 'attraction_multiplier').min(0.0).max(1.0).step(.025).name('attraction');
+	gui.add(layout, 'repulsion_multiplier').min(.0001).max(.005).step(.0001).name('repulsion');
 }
 
 requestAnimationFrame(animate);

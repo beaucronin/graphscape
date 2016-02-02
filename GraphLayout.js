@@ -292,7 +292,7 @@ Layout.ForceDirected = function(graph, options) {
           var delta_length_z = Math.max(EPSILON, Math.sqrt((delta_z * delta_z) + (delta_y * delta_y)));
         }
         var force = (delta_length * delta_length) / attraction_constant;
-        console.log(force);
+        // console.log(force);
         if(this.layout === "3d") {
           var force_z = (delta_length_z * delta_length_z) / attraction_constant;
         }
