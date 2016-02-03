@@ -2,7 +2,7 @@ var nodes = {};
 var SPEED = 5;
 var graph = new Graph(),
 	// layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .5, repulsion: 0.01, width: 1000, height: 1000 });
-	layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .05, repulsion: 0.001, width: 1000, height: 1000 });
+	layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .1, repulsion: 0.01, width: 1000, height: 1000, iterations: 50000 });
 
 var spriteMaterial = new THREE.SpriteMaterial( 
 { 
@@ -11,7 +11,7 @@ var spriteMaterial = new THREE.SpriteMaterial(
 });
 
 var vertexPool = [],
-	POOL_SIZE = 100;
+	POOL_SIZE = 10000;
 
 var container, stats;
 var camera, scene, renderer, points;
@@ -91,12 +91,12 @@ window.onload = function() {
 	socket.onopen = function() {
 		socket.send(JSON.stringify({
 			command: "play",
-			start: "2016-01-01T00:00:00.000Z",
-			end: "2016-01-01T00:00:30.000Z",
-			// start: "2001-03-01T12:00:00.000Z",
-			// end: "2001-03-02T00:00:00.000Z",
+			// start: "2016-01-01T00:00:00.000Z",
+			// end: "2016-01-01T00:00:30.000Z",
+			start: "2001-03-01T00:00:00.000Z",
+			end: "2001-03-03T00:00:00.000Z",
 			loop: true,
-			speed: SPEED
+			speed: 7200
 		}));
 	}
 
@@ -136,23 +136,15 @@ function init() {
 	var pointsMaterial = new THREE.PointsMaterial(
 		{ 
 			map: THREE.ImageUtils.loadTexture( "ball.png" ),
-			color: 0x0022ff, 
+			color: 0xaaaaff, 
 			transparent: false, 
-			// opacity: 0.5, 
 			alphaTest: 0.5,
 			size: 1,
-			// vertexColors: THREE.VertexColors,
 			sizeAttenuation: true 
 		}
 	);
 	points = new THREE.Points(pointsGeometry, pointsMaterial);
 	createNode('foo');
-	// createNode('a');
-	// createNode('b');
-	// createNode('c');
-	// createNode('d');
-	// createNode('e');
-	// createNode('f');
 
 	scene.add(points);
 

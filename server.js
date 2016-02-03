@@ -13,8 +13,8 @@ server.listen(8080);
 console.log('listening...');
 
 wss.on('connection', function(ws) {
-	var reader = new tivo.readers.FileReader(filename),
-	// var reader = new tivo.readers.PGReader(conString, 'enron_events'),
+	// var reader = new tivo.readers.FileReader(filename),
+	var reader = new tivo.readers.PGReader(conString, 'enron_events'),
 		writer = new tivo.writers.WebSocketWriter(ws),
 		controller = new tivo.Controller(reader, writer);
 
