@@ -10,8 +10,11 @@ var spriteMaterial = new THREE.SpriteMaterial(
 	color: 0x00ff0f, transparent: false, blending: THREE.AdditiveBlending
 });
 
+var vertexPool = [],
+	POOL_SIZE = 100;
+
 var container, stats;
-var camera, scene, renderer, particles, geometry, material, i, h, color, sprite, size;
+var camera, scene, renderer, points;
 var mouseX = 0, mouseY = 0;
 
 var windowHalfX = window.innerWidth / 2;
@@ -22,18 +25,19 @@ function initLayout() {
 }
 
 function createNode(name) {
-	var geo = new THREE.SphereGeometry(.15, 32,32),
-		mat = new THREE.MeshPhongMaterial({ color: "#2233dd"}),
-		mesh = new THREE.Mesh(geo, mat);
-	mesh.position.set(Math.random() - .5, Math.random() - .5, Math.random() - 1.5);
-	scene.add(mesh);
-	nodes[name] = mesh;
-	var node = new Node(mesh.id);
-	node.position = mesh.position;
-	node.data = mesh;
-	console.log('created node '+name);
+	// var vertex = new THREE.Vector3(Math.random() - .5, Math.random() - .5, Math.random() - 1.5);
+	// points.geometry.vertices.push(vertex);
+	var vertex = vertexPool.pop();
+	vertex.x = Math.random() * .1;
+	vertex.y = Math.random() * .1;
+	vertex.z = Math.random() * .1;
+	points.geometry.verticesNeedUpdate = true;
+	nodes[name] = vertex;
+	var node = new Node(name);
+	node.position = vertex;
+	node.data = vertex;
 	if (graph.addNode(node))
-		initLayout();	
+		initLayout();
 }
 
 function processEvent(e) {
@@ -49,15 +53,15 @@ function processEvent(e) {
 		var sprite = new THREE.Sprite( spriteMaterial.clone() );
 		sprite.scale.set(0.25, 0.25, 0.25);
 
-		var p1 = nodes[e.src].position,
-			p2 = nodes[e.tgt].position,
-			geo = new THREE.SphereGeometry(.001, 4, 4),
+		var p1 = graph.getNode(e.src).position,
+			p2 = graph.getNode(e.tgt).position,
+			geo = new THREE.Geometry(),
 			mat = new THREE.MeshLambertMaterial({ color: 0x2222ff }),
 			mesh = new THREE.Mesh(geo, mat);
 
 		mesh.add(sprite);
 		scene.add(mesh);
-		if (graph.addEdge(graph.getNode(nodes[e.src].id), graph.getNode(nodes[e.tgt].id)))
+		if (graph.addEdge(graph.getNode(e.src), graph.getNode(e.tgt)))
 			initLayout();
 
 		var tween = new TWEEN.Tween({ x: p1.x, y: p1.y, z: p1.z })
@@ -83,7 +87,6 @@ window.onload = function() {
 	socket.onmessage = function(event) {
 		processEvent(JSON.parse(event.data));
 		var data = JSON.parse(event.data);
-		console.log(data);
 	}
 	socket.onopen = function() {
 		socket.send(JSON.stringify({
@@ -97,30 +100,61 @@ window.onload = function() {
 		}));
 	}
 
-	var gui = new DAT.GUI({
-    	height : 5 * 32 - 1
-	});
+	// var gui = new DAT.GUI({
+ //    	height : 5 * 32 - 1
+	// });
 	// gui.add(layout, 'attraction_multiplier').min(0.0).max(1.0).step(.025).name('attraction');
 	// gui.add(layout, 'repulsion_multiplier').min(.0001).max(.005).step(.0001).name('repulsion');
 }
-
-init();
-animate();
 
 function init() {
 
 	container = document.createElement( 'div' );
 	document.body.appendChild( container );
 
-	camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 2, 2000 );
+	camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, .01, 2000 );
 	camera.position.z = 5;
 	camera.lookAt(0, 0, 0);
 
 	scene = new THREE.Scene();
 	// scene.fog = new THREE.FogExp2( 0x000000, 0.001 );
 
-	var light = new THREE.AmbientLight( 0x404040 );
-	scene.add(light);
+	// var light = new THREE.AmbientLight( 0x404040 );
+	// scene.add(light);
+	// pointsMaterial.color.setHSL( 1.0, 0.3, 0.7 );
+	
+
+
+	var pointsGeometry = new THREE.Geometry(),
+		vertex;
+	for (i = 0; i < POOL_SIZE; i++) {
+		vertex = new THREE.Vector3(0, 0, -10000);
+		vertexPool.push(vertex);
+		pointsGeometry.vertices.push(vertex);
+	}
+	pointsGeometry.verticesNeedUpdate = true;
+	var pointsMaterial = new THREE.PointsMaterial(
+		{ 
+			map: THREE.ImageUtils.loadTexture( "ball.png" ),
+			color: 0x0022ff, 
+			transparent: false, 
+			// opacity: 0.5, 
+			alphaTest: 0.5,
+			size: 1,
+			// vertexColors: THREE.VertexColors,
+			sizeAttenuation: true 
+		}
+	);
+	points = new THREE.Points(pointsGeometry, pointsMaterial);
+	createNode('foo');
+	// createNode('a');
+	// createNode('b');
+	// createNode('c');
+	// createNode('d');
+	// createNode('e');
+	// createNode('f');
+
+	scene.add(points);
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio( window.devicePixelRatio );
@@ -148,6 +182,9 @@ function animate(time) {
 	renderer.render( scene, camera );
 	layout.generate();
 	TWEEN.update(time);
+	points.geometry.verticesNeedUpdate = true;
 
 }
 
+init();
+animate();
