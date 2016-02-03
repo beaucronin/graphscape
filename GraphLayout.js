@@ -199,6 +199,16 @@ Layout.ForceDirected = function(graph, options) {
     repulsion_constant = this.repulsion_multiplier * forceConstant;
   };
 
+  this.nudge = function() {
+    this.finished = false;
+    // temperature = this.width / 10.0;
+    nodes_length = this.graph.nodes.length;
+    edges_length = this.graph.edges.length;
+    forceConstant = Math.sqrt(this.height * this.width / nodes_length);
+    attraction_constant = this.attraction_multiplier * forceConstant;
+    repulsion_constant = this.repulsion_multiplier * forceConstant;    
+  }
+
   /**
    * Generates the force-directed layout.
    *

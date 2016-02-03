@@ -37,7 +37,7 @@ function createNode(name) {
 	node.position = vertex;
 	node.data = vertex;
 	if (graph.addNode(node))
-		initLayout();
+		layout.nudge();
 }
 
 function processEvent(e) {
@@ -62,7 +62,7 @@ function processEvent(e) {
 		mesh.add(sprite);
 		scene.add(mesh);
 		if (graph.addEdge(graph.getNode(e.src), graph.getNode(e.tgt)))
-			initLayout();
+			layout.nudge();
 
 		var tween = new TWEEN.Tween({ x: p1.x, y: p1.y, z: p1.z })
 			.to({ x: p2.x, y: p2.y, z: p2.z }, 1000)
@@ -145,6 +145,7 @@ function init() {
 	);
 	points = new THREE.Points(pointsGeometry, pointsMaterial);
 	createNode('foo');
+	layout.init();
 
 	scene.add(points);
 
