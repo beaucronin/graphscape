@@ -169,8 +169,7 @@ Layout.ForceDirected = function(graph, options) {
   this.graph = graph;
   this.width = options.width || 200;
   this.height = options.height || 200;
-  this.started = false;
-  this.finished = false;
+  this.state = 'NEW';
 
   var callback_positionUpdated = options.positionUpdated;
   
@@ -190,26 +189,49 @@ Layout.ForceDirected = function(graph, options) {
   /**
    * Initialize parameters used by the algorithm.
    */
-  this.init = function() {
-    this.started = true;
-    this.finished = false;
+  this.run = function() {
+    this.state = 'RUN';
+    this.initParams();
+  };
+
+  this.cool = function() {
+    this.state = 'COOL';
+    this.initParams();
+  }
+
+  this.stop = function() {
+    this.state = 'DONE';
+  }
+
+  this.initParams = function() {
     temperature = this.width / 10.0;
+    this.updateParams();
+  }
+
+  this.isRunning = function() {
+    return this.state == 'RUN' || this.state == 'COOL';
+  }
+
+  /**
+  * Should be called after making changes to the graph (nodes or edges)
+  */
+  this.updateParams = function() {
     nodes_length = this.graph.nodes.length;
     edges_length = this.graph.edges.length;
     forceConstant = Math.sqrt(this.height * this.width / nodes_length);
     attraction_constant = this.attraction_multiplier * forceConstant;
     repulsion_constant = this.repulsion_multiplier * forceConstant;
-  };
-
-  this.nudge = function() {
-    // this.finished = false;
-    // temperature = this.width / 10.0;
-    nodes_length = this.graph.nodes.length;
-    edges_length = this.graph.edges.length;
-    forceConstant = Math.sqrt(this.height * this.width / nodes_length);
-    attraction_constant = this.attraction_multiplier * forceConstant;
-    repulsion_constant = this.repulsion_multiplier * forceConstant;    
   }
+
+  // this.nudge = function() {
+  //   // this.finished = false;
+  //   // temperature = this.width / 10.0;
+  //   nodes_length = this.graph.nodes.length;
+  //   edges_length = this.graph.edges.length;
+  //   forceConstant = Math.sqrt(this.height * this.width / nodes_length);
+  //   attraction_constant = this.attraction_multiplier * forceConstant;
+  //   repulsion_constant = this.repulsion_multiplier * forceConstant;    
+  // }
 
   /**
    * Generates the force-directed layout.
@@ -218,7 +240,7 @@ Layout.ForceDirected = function(graph, options) {
    * the temperature is nearly zero.
    */
   this.generate = function() {
-    if(layout_iterations < this.max_iterations && temperature > 0.000001) {
+    if (this.state == 'RUN' || this.state == 'COOL') {
       var start = new Date().getTime();
       
       // calculate repulsion
@@ -352,25 +374,17 @@ Layout.ForceDirected = function(graph, options) {
           callback_positionUpdated(node);
         }
       }
-      temperature *= (1 - (layout_iterations / this.max_iterations));
-      layout_iterations++;
+
+      if (this.state == 'COOL') {
+        temperature *= (1 - (layout_iterations / this.max_iterations));
+        layout_iterations++;
+        if (layout_iterations >= this.max_iterations || this.temperature <= .00000000001)
+          this.state = 'DONE';
+      }
 
       var end = new Date().getTime();
       mean_time += end - start;
-    } else {
-      if(!this.finished) {        
-        console.log("Average time: " + (mean_time/layout_iterations) + " ms");
-      }
-      this.finished = true;
-      return false;
     }
     return true;
   };
-
-  /**
-   * Stops the calculation by setting the current_iterations to max_iterations.
-   */
-  this.stop_calculating = function() {
-    layout_iterations = this.max_iterations;
-  }
 };

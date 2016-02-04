@@ -20,10 +20,6 @@ var mouseX = 0, mouseY = 0;
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
 
-function initLayout() {
-	layout.init();
-}
-
 function createNode(name) {
 	// var vertex = new THREE.Vector3(Math.random() - .5, Math.random() - .5, Math.random() - 1.5);
 	// points.geometry.vertices.push(vertex);
@@ -36,10 +32,8 @@ function createNode(name) {
 	var node = new Node(name);
 	node.position = vertex;
 	node.data = vertex;
-	if ((!layout.started) && Object.keys(nodes).length > 20)
-		layout.init();
-	if (graph.addNode(node) && layout.started)
-		layout.nudge();
+	if (graph.addNode(node))
+		layout.updateParams();
 }
 
 function processEvent(e) {
@@ -52,14 +46,18 @@ function processEvent(e) {
 	} else {
 		if (! (e.src in nodes))
 			createNode(e.src);
+
 		if (! (e.tgt in nodes))
 			createNode(e.tgt);
 
-		if (graph.addEdge(graph.getNode(e.src), graph.getNode(e.tgt)) && layout.started)
-			layout.nudge();
+		if (graph.addEdge(graph.getNode(e.src), graph.getNode(e.tgt)))
+			layout.updateParams();
 
-		if ((! layout.started) || layout.temperature > .0001)
-			return;
+		if (layout.state == 'NEW') {
+			layout.run();
+			setTimeout(function() { layout.cool(); }, 10000)
+		}
+
 
 		var sprite = new THREE.Sprite( spriteMaterial.clone() );
 		sprite.scale.set(0.25, 0.25, 0.25);
@@ -117,20 +115,20 @@ window.onload = function() {
 	socket.onopen = function() {
 		socket.send(JSON.stringify({
 			command: "play",
-			// start: "2016-01-01T00:00:00.000Z",
-			// end: "2016-01-01T00:00:30.000Z",
-			start: "2001-03-01T00:00:00.000Z",
-			end: "2001-03-03T00:00:00.000Z",
+			start: "2016-01-01T00:00:00.000Z",
+			end: "2016-01-01T00:00:30.000Z",
+			// start: "2001-03-01T00:00:00.000Z",
+			// end: "2001-03-03T00:00:00.000Z",
 			loop: true,
-			speed: 7200
+			speed: 1
 		}));
 	}
 
-	// var gui = new DAT.GUI({
- //    	height : 5 * 32 - 1
-	// });
-	// gui.add(layout, 'attraction_multiplier').min(0.0).max(1.0).step(.025).name('attraction');
-	// gui.add(layout, 'repulsion_multiplier').min(.0001).max(.005).step(.0001).name('repulsion');
+	var gui = new dat.GUI({
+    	height : 5 * 32 - 1
+	});
+	gui.add(layout, 'attraction_multiplier').min(0.0).max(1.0).step(.025).name('attraction');
+	gui.add(layout, 'repulsion_multiplier').min(.001).max(.005).step(.0005).name('repulsion');
 }
 
 function init() {
