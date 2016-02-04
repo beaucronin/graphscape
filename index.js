@@ -1,8 +1,25 @@
 var nodes = {};
-var SPEED = 5;
 var graph = new Graph(),
+	layoutParams = {
+		layout: '3d', 
+		attraction: .1, 
+		repulsion: 0.01, 
+		width: 1000, 
+		height: 1000, 
+		iterations: 10000
+	},
 	// layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .5, repulsion: 0.01, width: 1000, height: 1000 });
-	layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .1, repulsion: 0.01, width: 1000, height: 1000, iterations: 10000 });
+	layout = new Layout.ForceDirected(graph, layoutParams);
+
+var playParams = {
+	command: "play",
+	start: "2016-01-01T00:00:00.000Z",
+	end: "2016-01-01T00:00:30.000Z",
+	// start: "2001-03-01T00:00:00.000Z",
+	// end: "2001-03-03T00:00:00.000Z",
+	loop: true,
+	speed: 1
+};
 
 var spriteMaterial = new THREE.SpriteMaterial( 
 { 
@@ -16,9 +33,18 @@ var vertexPool = [],
 var container, stats;
 var camera, scene, renderer, points;
 var mouseX = 0, mouseY = 0;
+var socket;
 
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
+
+function bumpLayout() {
+	if (layout.state == 'COOL' || layout.state == 'DONE') {
+		layout.bump();
+	} else if (layout == 'RUN') {
+		layout.updateParams();
+	}
+}
 
 function createNode(name) {
 	// var vertex = new THREE.Vector3(Math.random() - .5, Math.random() - .5, Math.random() - 1.5);
@@ -54,8 +80,8 @@ function processEvent(e) {
 			layout.updateParams();
 
 		if (layout.state == 'NEW') {
-			layout.run();
-			setTimeout(function() { layout.cool(); }, 10000)
+			layout.cool();
+			// setTimeout(function() { layout.cool(); }, 10000)
 		}
 
 
@@ -87,48 +113,41 @@ function processEvent(e) {
 			.easing(TWEEN.Easing.Quadratic.InOut)
 			.start();
 
-	// 	var tween = new TWEEN.Tween({ a: 0.0 })
-	// 		.to({ a: 1.0 }, 1000)
-	// 		.onStart(function() {
-	// 			mesh.position.set(p1.x, p1.y, p1.z);
-	// 		})
-	// 		.onUpdate(function() {
-	// 			var p = graph.getNode(e.tgt).position,
-	// 				v = p.sub(p1),
-	// 				d = p1.add(v.multiplyScalar(this.a));
-	// 			mesh.position.set(d.x, d.y, d.z);
-	// 		})
-	// 		.onComplete(function() {
-	// 			scene.remove(mesh);
-	// 		})
-	// 		.easing(TWEEN.Easing.Quadratic.InOut)
-	// 		.start();
 	}
 }
 
+function startPlayback() {
+	socket.send(JSON.stringify( playParams ) );
+}
+
 window.onload = function() {
-	var socket = new WebSocket('ws://127.0.0.1:8080/');
+	socket = new WebSocket('ws://127.0.0.1:8080/');
 	socket.onmessage = function(event) {
 		processEvent(JSON.parse(event.data));
 		var data = JSON.parse(event.data);
 	}
 	socket.onopen = function() {
-		socket.send(JSON.stringify({
-			command: "play",
-			start: "2016-01-01T00:00:00.000Z",
-			end: "2016-01-01T00:00:30.000Z",
-			// start: "2001-03-01T00:00:00.000Z",
-			// end: "2001-03-03T00:00:00.000Z",
-			loop: true,
-			speed: 1
-		}));
+		startPlayback();
 	}
 
 	var gui = new dat.GUI({
     	height : 5 * 32 - 1
 	});
-	gui.add(layout, 'attraction_multiplier').min(0.0).max(1.0).step(.025).name('attraction');
-	gui.add(layout, 'repulsion_multiplier').min(.001).max(.005).step(.0005).name('repulsion');
+	var f1 = gui.addFolder('Layout');
+	f1.add(layout, 'attraction_multiplier', 0.0, 1.0, .025)
+		.name('attraction')
+		.onFinishChange(function() {
+			bumpLayout();
+		});
+	f1.add(layout, 'repulsion_multiplier', .001, .005, .0005)
+		.name('repulsion')
+		.onFinishChange(function() {
+			bumpLayout();
+		});
+	var f2 = gui.addFolder('Playback');
+	f2.add(playParams, 'loop').onFinishChange(function() { startPlayback(); });
+	f2.add(playParams, 'speed', { '1x': 1, '2x': 2, '10x': 10, 'minute': 60, 'hour': 3600, 'day': 86400})
+		.onFinishChange(function() { startPlayback(); });
 }
 
 function init() {
@@ -137,17 +156,11 @@ function init() {
 	document.body.appendChild( container );
 
 	camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, .01, 2000 );
-	camera.position.z = 5;
+	camera.position.z = 10;
 	camera.lookAt(0, 0, 0);
 
 	scene = new THREE.Scene();
 	// scene.fog = new THREE.FogExp2( 0x000000, 0.001 );
-
-	// var light = new THREE.AmbientLight( 0x404040 );
-	// scene.add(light);
-	// pointsMaterial.color.setHSL( 1.0, 0.3, 0.7 );
-	
-
 
 	var pointsGeometry = new THREE.Geometry(),
 		vertex;
@@ -196,7 +209,8 @@ function onWindowResize() {
 function animate(time) {
 	requestAnimationFrame( animate );
 	renderer.render( scene, camera );
-	layout.generate();
+	if (layout.state == 'RUN' || layout.state == 'COOL')
+		layout.generate();
 	TWEEN.update(time);
 	points.geometry.verticesNeedUpdate = true;
 
