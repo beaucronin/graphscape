@@ -2,7 +2,7 @@ var nodes = {};
 var SPEED = 5;
 var graph = new Graph(),
 	// layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .5, repulsion: 0.01, width: 1000, height: 1000 });
-	layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .1, repulsion: 0.01, width: 1000, height: 1000, iterations: 50000 });
+	layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .1, repulsion: 0.01, width: 1000, height: 1000, iterations: 10000 });
 
 var spriteMaterial = new THREE.SpriteMaterial( 
 { 
@@ -28,20 +28,25 @@ function createNode(name) {
 	// var vertex = new THREE.Vector3(Math.random() - .5, Math.random() - .5, Math.random() - 1.5);
 	// points.geometry.vertices.push(vertex);
 	var vertex = vertexPool.pop();
-	vertex.x = Math.random() * .1;
-	vertex.y = Math.random() * .1;
-	vertex.z = Math.random() * .1;
+	vertex.x = Math.random();
+	vertex.y = Math.random();
+	vertex.z = Math.random();
 	points.geometry.verticesNeedUpdate = true;
 	nodes[name] = vertex;
 	var node = new Node(name);
 	node.position = vertex;
 	node.data = vertex;
-	if (graph.addNode(node))
+	if ((!layout.started) && Object.keys(nodes).length > 20)
+		layout.init();
+	if (graph.addNode(node) && layout.started)
 		layout.nudge();
 }
 
 function processEvent(e) {
 	if ('type' in e) {
+		// if (e.type == 'PLAY' && ! layout.started)
+			// layout.init();
+			// setTimeout(function() { layout.init(); }, 5000);
 		// informational message
 		// console.log(e);
 	} else {
@@ -50,24 +55,28 @@ function processEvent(e) {
 		if (! (e.tgt in nodes))
 			createNode(e.tgt);
 
+		if (graph.addEdge(graph.getNode(e.src), graph.getNode(e.tgt)) && layout.started)
+			layout.nudge();
+
+		if ((! layout.started) || layout.temperature > .0001)
+			return;
+
 		var sprite = new THREE.Sprite( spriteMaterial.clone() );
 		sprite.scale.set(0.25, 0.25, 0.25);
 
-		var p1 = graph.getNode(e.src).position,
-			p2 = graph.getNode(e.tgt).position,
+		var p1 = graph.getNode(e.src).position.clone(),
+			p2 = graph.getNode(e.tgt).position.clone(),
 			geo = new THREE.Geometry(),
 			mat = new THREE.MeshLambertMaterial({ color: 0x2222ff }),
 			mesh = new THREE.Mesh(geo, mat);
 
 		mesh.add(sprite);
 		scene.add(mesh);
-		if (graph.addEdge(graph.getNode(e.src), graph.getNode(e.tgt)))
-			layout.nudge();
 
 		var tween = new TWEEN.Tween({ x: p1.x, y: p1.y, z: p1.z })
 			.to({ x: p2.x, y: p2.y, z: p2.z }, 1000)
 			.onStart(function() {
-				mesh.position.set(p1.x, p1.y, p2.z);
+				mesh.position.set(p1.x, p1.y, p1.z);
 			})
 			.onUpdate(function() {
 				mesh.position.x = this.x;
@@ -79,6 +88,23 @@ function processEvent(e) {
 			})
 			.easing(TWEEN.Easing.Quadratic.InOut)
 			.start();
+
+	// 	var tween = new TWEEN.Tween({ a: 0.0 })
+	// 		.to({ a: 1.0 }, 1000)
+	// 		.onStart(function() {
+	// 			mesh.position.set(p1.x, p1.y, p1.z);
+	// 		})
+	// 		.onUpdate(function() {
+	// 			var p = graph.getNode(e.tgt).position,
+	// 				v = p.sub(p1),
+	// 				d = p1.add(v.multiplyScalar(this.a));
+	// 			mesh.position.set(d.x, d.y, d.z);
+	// 		})
+	// 		.onComplete(function() {
+	// 			scene.remove(mesh);
+	// 		})
+	// 		.easing(TWEEN.Easing.Quadratic.InOut)
+	// 		.start();
 	}
 }
 
@@ -145,7 +171,6 @@ function init() {
 	);
 	points = new THREE.Points(pointsGeometry, pointsMaterial);
 	createNode('foo');
-	layout.init();
 
 	scene.add(points);
 

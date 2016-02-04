@@ -169,6 +169,7 @@ Layout.ForceDirected = function(graph, options) {
   this.graph = graph;
   this.width = options.width || 200;
   this.height = options.height || 200;
+  this.started = false;
   this.finished = false;
 
   var callback_positionUpdated = options.positionUpdated;
@@ -190,6 +191,7 @@ Layout.ForceDirected = function(graph, options) {
    * Initialize parameters used by the algorithm.
    */
   this.init = function() {
+    this.started = true;
     this.finished = false;
     temperature = this.width / 10.0;
     nodes_length = this.graph.nodes.length;
@@ -200,7 +202,7 @@ Layout.ForceDirected = function(graph, options) {
   };
 
   this.nudge = function() {
-    this.finished = false;
+    // this.finished = false;
     // temperature = this.width / 10.0;
     nodes_length = this.graph.nodes.length;
     edges_length = this.graph.edges.length;
