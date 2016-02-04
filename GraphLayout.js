@@ -208,6 +208,20 @@ Layout.ForceDirected = function(graph, options) {
     this.updateParams();
   }
 
+  this.bump = function() {
+    if (this.state == 'RUN' || this.state == 'NEW')
+      return;
+    var newTemperature = 0.1 * this.width / 10.0;
+    var newIterations = 0.5 * this.max_iterations;
+    if (temperature < newTemperature)
+      temperature = newTemperature;
+    if (layout_iterations > newIterations)
+      layout_iterations = newIterations;
+    if (this.state == 'DONE')
+      this.state == 'COOL';
+    this.updateParams();
+  }
+
   this.isRunning = function() {
     return this.state == 'RUN' || this.state == 'COOL';
   }
