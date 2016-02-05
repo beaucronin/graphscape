@@ -9,7 +9,7 @@ var app = express(),
 	filename = __dirname+'/testEvents.json';
 
 app.set('port', (process.env.PORT || 5000));
-app.use(express.static(__dirname+'/static/'));
+app.use('/static', express.static(__dirname+'/static/'));
 // app.listen(app.get('port'), function() { console.log('listening...')});
 server.listen(app.get('port'));
 
