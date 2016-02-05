@@ -6,7 +6,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "local": "budo --live --verbose --port 3000 --open"
-    "start": "",
     "deploy": "ghpages",
     "ghpages": "ghpages"
   },
