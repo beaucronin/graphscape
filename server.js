@@ -10,9 +10,8 @@ var app = express(),
 
 app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname+'/static/'));
-app.listen(app.get('port'), function() { console.log('listening...')});
-
-server.listen(8080);
+// app.listen(app.get('port'), function() { console.log('listening...')});
+server.listen(app.get('port'));
 
 wss.on('connection', function(ws) {
 	// var reader = new tivo.readers.FileReader(filename),
