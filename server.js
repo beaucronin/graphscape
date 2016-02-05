@@ -6,12 +6,12 @@ var tivo = require('tivo'),
 var app = express(),
 	server = http.createServer(app),
 	wss = new WebSocketServer({ server: server }),
-	filename = 'testEvents.json',
+	filename = __dirname+'/testEvents.json',
 	conString = 'postgres://beaucronin:Mfw1bas1@events-test.cmusm4olucdj.us-west-2.rds.amazonaws.com/events';
 
 app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname+'/static/'));
-app.listen(app.get('port'), function() { console.log('listening dude')});
+app.listen(app.get('port'), function() { console.log('listening...')});
 
 server.listen(8080);
 
