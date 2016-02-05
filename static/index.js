@@ -122,7 +122,7 @@ function startPlayback() {
 window.onload = function() {
 	try {
 		var host = window.document.location.host.replace(/:.*/, '')
-		socket = new WebSocket('ws://' + host + ':5000');
+		socket = new WebSocket('ws://' + host);
 	} catch (err) {
 		console.log(err);
 	}
