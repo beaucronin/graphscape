@@ -392,7 +392,6 @@ Layout.ForceDirected = function(graph, options) {
       if (this.state == 'COOL') {
         temperature *= .98; //(1 - (layout_iterations / this.max_iterations));
         layout_iterations++;
-        console.log(layout_iterations+' '+temperature);
         if (layout_iterations >= this.max_iterations || this.temperature <= .00000000001) {
           this.state = 'DONE';
           console.log('DONE');
