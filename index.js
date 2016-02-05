@@ -6,17 +6,16 @@ var graph = new Graph(),
 		repulsion: 0.01, 
 		width: 1000, 
 		height: 1000, 
-		iterations: 10000
+		iterations: 1000
 	},
-	// layout = new Layout.ForceDirected(graph, { layout: '3d', attraction: .5, repulsion: 0.01, width: 1000, height: 1000 });
 	layout = new Layout.ForceDirected(graph, layoutParams);
 
 var playParams = {
 	command: "play",
-	start: "2016-01-01T00:00:00.000Z",
-	end: "2016-01-01T00:00:30.000Z",
-	// start: "2001-03-01T00:00:00.000Z",
-	// end: "2001-03-03T00:00:00.000Z",
+	// start: "2016-01-01T00:00:00.000Z",
+	// end: "2016-01-01T00:00:30.000Z",
+	start: "2001-03-01T00:00:00.000Z",
+	end: "2001-03-08T00:00:00.000Z",
 	loop: true,
 	speed: 1
 };
@@ -144,6 +143,7 @@ window.onload = function() {
 		.onFinishChange(function() {
 			bumpLayout();
 		});
+	f1.add(layout, 'stop');
 	var f2 = gui.addFolder('Playback');
 	f2.add(playParams, 'loop').onFinishChange(function() { startPlayback(); });
 	f2.add(playParams, 'speed', { '1x': 1, '2x': 2, '10x': 10, 'minute': 60, 'hour': 3600, 'day': 86400})
@@ -174,7 +174,7 @@ function init() {
 		{ 
 			map: THREE.ImageUtils.loadTexture( "ball.png" ),
 			color: 0xaaaaff, 
-			transparent: false, 
+			transparent: false,
 			alphaTest: 0.5,
 			size: 1,
 			sizeAttenuation: true 

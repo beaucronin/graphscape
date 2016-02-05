@@ -204,21 +204,21 @@ Layout.ForceDirected = function(graph, options) {
   }
 
   this.initParams = function() {
-    temperature = this.width / 10.0;
+    temperature = 100.0;
     this.updateParams();
   }
 
   this.bump = function() {
     if (this.state == 'RUN' || this.state == 'NEW')
       return;
-    var newTemperature = 0.1 * this.width / 10.0;
+    var newTemperature = 10.0;
     var newIterations = 0.5 * this.max_iterations;
     if (temperature < newTemperature)
       temperature = newTemperature;
     if (layout_iterations > newIterations)
       layout_iterations = newIterations;
     if (this.state == 'DONE')
-      this.state == 'COOL';
+      this.state = 'COOL';
     this.updateParams();
   }
 
@@ -390,10 +390,13 @@ Layout.ForceDirected = function(graph, options) {
       }
 
       if (this.state == 'COOL') {
-        temperature *= (1 - (layout_iterations / this.max_iterations));
+        temperature *= .98; //(1 - (layout_iterations / this.max_iterations));
         layout_iterations++;
-        if (layout_iterations >= this.max_iterations || this.temperature <= .00000000001)
+        console.log(layout_iterations+' '+temperature);
+        if (layout_iterations >= this.max_iterations || this.temperature <= .00000000001) {
           this.state = 'DONE';
+          console.log('DONE');
+        }
       }
 
       var end = new Date().getTime();
