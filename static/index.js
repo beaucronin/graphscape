@@ -120,7 +120,13 @@ function startPlayback() {
 }
 
 window.onload = function() {
-	socket = new WebSocket('ws://127.0.0.1:8080/');
+	try {
+		socket = new WebSocket('ws://127.0.0.1:8080/');
+
+	} catch (err) {
+		console.log(err);
+		socket = new WebSocket('ws://graphscape.herokuapp.com:8080/');
+	}
 	socket.onmessage = function(event) {
 		processEvent(JSON.parse(event.data));
 		var data = JSON.parse(event.data);
